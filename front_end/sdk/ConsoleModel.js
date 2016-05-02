@@ -45,12 +45,13 @@ WebInspector.ConsoleModel = function(target)
     this._errors = 0;
     this._revokedErrors = 0;
     this._consoleAgent = target.consoleAgent();
-    target.registerConsoleDispatcher(new WebInspector.ConsoleDispatcher(this));
+    target.registerConsoleDispatcher(new WebInspector.DiracAwareConsoleDispatcher(this));
     this._enableAgent();
 }
 
 WebInspector.ConsoleModel.Events = {
     ConsoleCleared: "ConsoleCleared",
+    DiracMessage: "DiracMessage",
     MessageAdded: "MessageAdded",
     MessageUpdated: "MessageUpdated",
     CommandEvaluated: "CommandEvaluated",
@@ -95,6 +96,10 @@ WebInspector.ConsoleModel.prototype = {
             this._messageById.set(msg._messageId, msg);
         this._incrementErrorWarningCount(msg);
         this.dispatchEventToListeners(WebInspector.ConsoleModel.Events.MessageAdded, msg);
+    },
+
+    dispatchDiracMessage: function(msg) {
+        this.dispatchEventToListeners(WebInspector.ConsoleModel.Events.DiracMessage, msg);
     },
 
     /**
@@ -445,6 +450,7 @@ WebInspector.ConsoleMessage.MessageType = {
     Result: "result",
     Profile: "profile",
     ProfileEnd: "profileEnd",
+    DiracCommand: "diracCommand",
     Command: "command"
 }
 
@@ -527,12 +533,45 @@ WebInspector.ConsoleDispatcher.prototype = {
 
 /**
  * @constructor
+ * @extends {WebInspector.ConsoleDispatcher}
+ * @implements {ConsoleAgent.Dispatcher}
+ * @param {!WebInspector.ConsoleModel} console
+ */
+WebInspector.DiracAwareConsoleDispatcher = function(console)
+{
+    WebInspector.ConsoleDispatcher.call(this, console);
+}
+
+WebInspector.DiracAwareConsoleDispatcher.prototype = {
+
+    /**
+     * @override
+     * @param {!ConsoleAgent.ConsoleMessage} payload
+     */
+    messageAdded: function(payload)
+    {
+        if (payload.parameters) {
+            var firstParam = payload.parameters[0];
+            if (firstParam && firstParam.value == "~~$DIRAC-MSG$~~") {
+                this._console.dispatchDiracMessage(payload);
+            }
+        }
+
+        WebInspector.ConsoleDispatcher.prototype.messageAdded.call(this, payload);
+    },
+
+    __proto__: WebInspector.ConsoleDispatcher.prototype
+}
+
+/**
+ * @constructor
  * @extends {WebInspector.Object}
  * @implements {WebInspector.TargetManager.Observer}
  */
 WebInspector.MultitargetConsoleModel = function()
 {
     WebInspector.targetManager.observeTargets(this);
+    WebInspector.targetManager.addModelListener(WebInspector.ConsoleModel, WebInspector.ConsoleModel.Events.DiracMessage, this._consoleDiracMessage, this);
     WebInspector.targetManager.addModelListener(WebInspector.ConsoleModel, WebInspector.ConsoleModel.Events.MessageAdded, this._consoleMessageAdded, this);
     WebInspector.targetManager.addModelListener(WebInspector.ConsoleModel, WebInspector.ConsoleModel.Events.MessageUpdated, this._consoleMessageUpdated, this);
     WebInspector.targetManager.addModelListener(WebInspector.ConsoleModel, WebInspector.ConsoleModel.Events.CommandEvaluated, this._commandEvaluated, this);
@@ -586,6 +625,11 @@ WebInspector.MultitargetConsoleModel.prototype = {
     _consoleMessageAdded: function(event)
     {
         this.dispatchEventToListeners(WebInspector.ConsoleModel.Events.MessageAdded, event.data);
+    },
+
+    _consoleDiracMessage: function(event)
+    {
+        this.dispatchEventToListeners(WebInspector.ConsoleModel.Events.DiracMessage, event.data);
     },
 
     /**

@@ -332,6 +332,86 @@ diff_match_patch.prototype = {
     diff_main: function(text1, text2) { }
 }
 
+var dirac = {
+    /** @type {boolean} */
+    _DEBUG_EVAL: true,
+    /** @type {boolean} */
+    hasFeature: true,
+    /** @type {boolean} */
+    hasREPL: true,
+    /** @type {boolean} */
+    hasParinfer: true,
+    /** @type {boolean} */
+    hasFriendlyLocals: true,
+    /** @type {boolean} */
+    hasClusteredLocals: true,
+    /** @type {boolean} */
+    hasInlineCFs: true,
+    /**
+    * @param {string} code
+    * @return {string}
+    */
+    codeAsString: function (code) {},
+    /**
+    * @param {string} string
+    * @return {string}
+    */
+    stringEscape: function (string) {},
+    /**
+    * @param {string} code
+    * @param {?} callback
+    */
+    evalInCurrentContext: function(code, callback) {},
+    /**
+    * @param {string} code
+    * @param {?} callback
+    */
+    evalInDefaultContext: function(code, callback) {},
+    /**
+    * @return {boolean}
+    */
+    hasCurrentContext: function() {},
+    /**
+    * @return {boolean}
+    */
+    hasDefaultContext: function() {},
+    implant: {
+        init: function() {},
+        init_console: function() {},
+        init_repl: function() {},
+        /**
+        * @param {Element} textAreaElement
+        * @param {boolean} useParinfer
+        * @returns {!CodeMirror}
+        */
+        adopt_prompt_element: function(textAreaElement, useParinfer) {},
+        /**
+        * @param {number} requestId
+        * @param {string} code
+        */
+        send_eval_request: function(requestId, code) {},
+        /**
+        * @param {string} text
+        */
+        feedback: function(text) {}
+    }
+}
+
+var Keysim = {
+    Keyboard: {
+        US_ENGLISH: {}},
+
+    /**
+     * Fires the correct sequence of events on the given target as if the given
+     * action was undertaken by a human.
+     *
+     * @param {string} action e.g. "alt+shift+left" or "backspace"
+     * @param {HTMLElement} target
+     */
+    dispatchEventsForAction: function(action, target) {}
+}
+
+
 /** @constructor */
 function Path2D() {}
 Path2D.prototype = {
@@ -507,7 +587,7 @@ CodeMirror.prototype = {
     undo: function() { },
     unlinkDoc: function(other) { }
 }
-/** @type {!{cursorDiv: Element}} */
+/** @type {!{cursorDiv: Element, lineDiv: Element}} */
 CodeMirror.prototype.display;
 /** @type {!Object} */
 CodeMirror.Pass;
@@ -519,6 +599,7 @@ CodeMirror.getMode = function(options, spec) { };
 CodeMirror.overlayMode = function(mode1, mode2, squashSpans) { };
 CodeMirror.defineMode = function(modeName, modeConstructor) { };
 CodeMirror.startState = function(mode) { };
+CodeMirror.runMode = function(string, modespec, callback, options) { };
 
 /** @typedef {{canceled: boolean, from: !CodeMirror.Pos, to: !CodeMirror.Pos, text: string, origin: string, cancel: function()}} */
 CodeMirror.BeforeChangeObject;
